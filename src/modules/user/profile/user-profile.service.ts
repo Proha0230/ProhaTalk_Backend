@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { UsersDB } from "../../../database/entities/users/users-db.entity"
 import { Repository } from "typeorm"
 import { UserProfileDto } from "../../DTO/user/profile/user-profile.dto"
+import { IObjUserProfile } from "./types/types"
 
 @Injectable()
 export class UserProfileService {
@@ -47,6 +48,28 @@ export class UserProfileService {
             await this.usersRepository.save(user)
 
             return { message: "Изменения применены!" }
+        }
+    }
+
+    async getUserInfo(req: { login: string, id: number }): Promise<IObjUserProfile> {
+        // находим юзера в БД
+        const user = await this.usersRepository.findOne({
+            where: {
+                id: req.id,
+            }
+        })
+
+        if (!user) {
+            // если его нет, то возвращаем ошибку
+            throw new BadRequestException('Не удалось получить информацию о пользователе')
+        } else {
+            return {
+                login: user.login,
+                ptid: user.id,
+                name: user.name,
+                lastname: user.lastname,
+                status: user.status,
+            }
         }
     }
 }
