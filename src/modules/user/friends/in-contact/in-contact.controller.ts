@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Headers, UseGuards, Req, Res } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Headers, UseGuards, Req, Res } from '@nestjs/common'
 import { AuthGuard } from "@nestjs/passport"
 import { InviteFriendDTO } from "../../../DTO/friends/friends.dto"
 import type { IReqInfo } from "../../../../global-types/types"
@@ -8,12 +8,20 @@ import { InContactService } from "./in-contact.service"
 export class InContactController {
     constructor(private readonly inContactService: InContactService) {}
 
-    @Post('delete-user')
+    @Delete('delete-user')
     @UseGuards(AuthGuard('jwt'))
     deleteFriend(
         @Body() dto: InviteFriendDTO,
         @Req() req: IReqInfo
     ) {
         return this.inContactService.deleteFriend(dto, req.user)
+    }
+
+    @Get('get-list')
+    @UseGuards(AuthGuard('jwt'))
+    getContactsList(
+        @Req() req: IReqInfo
+    ) {
+        return this.inContactService.getContactsList(req.user)
     }
 }

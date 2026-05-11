@@ -5,6 +5,7 @@ import { FriendsUsersDB } from "../../../../database/entities/friends/friends-us
 import { FriendsRequestsDB } from "../../../../database/entities/friends/friends-request-db.entity"
 import { Repository } from "typeorm"
 import { InviteFriendDTO } from "../../../DTO/friends/friends.dto"
+import {IContactUser} from "./types";
 
 @Injectable()
 export class InContactService {
@@ -22,7 +23,7 @@ export class InContactService {
         const isUserFriend = await this.friendsUsersRepository.find({
             where: {
                 userId: req.id,
-                friendId: dto.ptid
+                friendId: dto.id
             }
         })
 
@@ -33,10 +34,10 @@ export class InContactService {
         await this.friendsUsersRepository.delete([
             {
                 userId: req.id,
-                friendId: dto.ptid,
+                friendId: dto.id,
             },
             {
-                userId: dto.ptid,
+                userId: dto.id,
                 friendId: req.id,
             }
         ])
@@ -44,5 +45,36 @@ export class InContactService {
         return {
             message: "Вы удалили контакт"
         }
+    }
+
+    // получение списка контактов пользователя
+    async getContactsList(req: { login: string, id: number}): Promise<Array<IContactUser>> {
+        const isUserFriend = await this.friendsUsersRepository.find({
+            where: {
+                userId: req.id
+            },
+            relations: ['friend'],
+            // select - выбираем то что конкретно нам отдаст БД в ответе
+            select: {
+                friendId: true,
+                friend: {
+                    id: true,
+                    login: true,
+                    name: true,
+                    lastname: true,
+                    status: true
+                }
+            }
+        })
+
+        let result: Array<IContactUser> = []
+
+        if (isUserFriend?.length) {
+            result = isUserFriend.map((item: any) => {
+                return item.friend
+            })
+        }
+
+        return result
     }
 }

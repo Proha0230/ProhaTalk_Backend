@@ -4,7 +4,7 @@ import { Type } from 'class-transformer'
 export class InviteFriendDTO {
     // login
     @Type(() => Number)
-    @IsNumber({}, { message: 'Поле ptid должно быть number' })
-    @IsNotEmpty({ message: 'Поле ptid не может быть пустым' })
-    ptid: number
+    @IsNumber({}, { message: 'Поле id должно быть number' })
+    @IsNotEmpty({ message: 'Поле id не может быть пустым' })
+    id: number
 }

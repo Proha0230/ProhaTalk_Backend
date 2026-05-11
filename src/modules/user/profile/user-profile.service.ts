@@ -65,7 +65,7 @@ export class UserProfileService {
         } else {
             return {
                 login: user.login,
-                ptid: user.id,
+                id: user.id,
                 name: user.name,
                 lastname: user.lastname,
                 status: user.status,

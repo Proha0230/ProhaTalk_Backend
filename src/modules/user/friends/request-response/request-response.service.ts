@@ -23,13 +23,13 @@ export class RequestResponseService {
     ) {}
 
     async sendInviteFriend(dto: InviteFriendDTO, req: { login: string, id: number}): Promise<any> {
-        if (dto.ptid === req.id) {
+        if (dto.id === req.id) {
             throw new BadRequestException('Нельзя добавить в контакты самого себя')
         }
 
         const user = await this.usersRepository.findOne({
             where: {
-                id: dto.ptid
+                id: dto.id
             }
         })
 
@@ -40,7 +40,7 @@ export class RequestResponseService {
         const existingFriend = await this.friendsUsersRepository.findOne({
                 where: {
                     userId: req.id,
-                    friendId: dto.ptid
+                    friendId: dto.id
                 }
         })
 
@@ -51,7 +51,7 @@ export class RequestResponseService {
         const existingRequest = await this.friendsRequestsRepository.findOne({
                 where: {
                     senderId: req.id,
-                    receiverId: dto.ptid
+                    receiverId: dto.id
                 }
         })
 
@@ -61,7 +61,7 @@ export class RequestResponseService {
 
         const request = this.friendsRequestsRepository.create({
                 senderId: req.id,
-                receiverId: dto.ptid
+                receiverId: dto.id
             })
 
         await this.friendsRequestsRepository.save(request)
@@ -75,7 +75,7 @@ export class RequestResponseService {
         const request = await this.friendsRequestsRepository.findOne({
             where: {
                 senderId: req.id,
-                receiverId: dto.ptid,
+                receiverId: dto.id,
             }
         })
 
@@ -87,7 +87,7 @@ export class RequestResponseService {
 
         await this.friendsRequestsRepository.delete({
             senderId: req.id,
-            receiverId: dto.ptid,
+            receiverId: dto.id,
         })
 
         return {
@@ -98,7 +98,7 @@ export class RequestResponseService {
     async declineInviteFriend(dto: InviteFriendDTO, req: { login: string, id: number}): Promise<any> {
         const request = await this.friendsRequestsRepository.findOne({
             where: {
-                senderId: dto.ptid,
+                senderId: dto.id,
                 receiverId: req.id,
             }
         })
@@ -110,7 +110,7 @@ export class RequestResponseService {
         }
 
         await this.friendsRequestsRepository.delete({
-            senderId: dto.ptid,
+            senderId: dto.id,
             receiverId: req.id,
         })
 
@@ -123,7 +123,7 @@ export class RequestResponseService {
         // ищем заявку
         const request = await this.friendsRequestsRepository.findOne({
             where: {
-                senderId: dto.ptid,
+                senderId: dto.id,
                 receiverId: req.id
             }
         })
@@ -136,7 +136,7 @@ export class RequestResponseService {
         const existingFriend = await this.friendsUsersRepository.findOne({
             where: {
                 userId: req.id,
-                friendId: dto.ptid
+                friendId: dto.id
             }
         })
 
@@ -158,12 +158,12 @@ export class RequestResponseService {
             // я -> он
             const friendOne = this.friendsUsersRepository.create({
                 userId: req.id,
-                friendId: dto.ptid,
+                friendId: dto.id,
             })
 
             // он -> я
             const friendTwo = this.friendsUsersRepository.create({
-                userId: dto.ptid,
+                userId: dto.id,
                 friendId: req.id,
             })
 
@@ -175,7 +175,7 @@ export class RequestResponseService {
 
             // удаляем заявку из бд заявок
             await this.friendsRequestsRepository.delete({
-                senderId: dto.ptid,
+                senderId: dto.id,
                 receiverId: req.id,
             })
 
@@ -207,6 +207,8 @@ export class RequestResponseService {
         return requests.map((request) => ({
             id: request.receiver.id,
             login: request.receiver.login,
+            name: request.receiver.name,
+            lastname: request.receiver.lastname,
             status: request.receiver.status,
         }))
     }
@@ -225,6 +227,8 @@ export class RequestResponseService {
         return requests.map((request) => ({
             id: request.sender.id,
             login: request.sender.login,
+            name: request.sender.name,
+            lastname: request.sender.lastname,
             status: request.sender.status,
         }))
     }

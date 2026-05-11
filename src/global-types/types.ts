@@ -1,4 +1,9 @@
 export interface IReqInfo {
-    user: { login: string, id: number }
+    user: IReqInfoUser
     [key: string]: any
+}
+
+export interface IReqInfoUser {
+    login: string,
+    id: number
 }

@@ -9,11 +9,9 @@ import { createTypeormOptionsFromConfigService } from "./config/typeorm-options"
 import { UserProfileModule } from "./modules/user/profile/user-profile.module"
 import { RequestResponseModule } from "./modules/user/friends/request-response/request-response.module"
 import { InContactModule } from "./modules/user/friends/in-contact/in-contact.module"
+import { AllUsersModule } from "./modules/user/all-users/all-users.module"
 
 loadEnvLocal()
-
-const configService = new ConfigService()
-console.log(configService.get<string>('JWT_SECRET'), "configService.get<string>('JWT_SECRET')")
 
 @Module({
   imports: [
@@ -35,7 +33,8 @@ console.log(configService.get<string>('JWT_SECRET'), "configService.get<string>(
     SignInModule,
     UserProfileModule,
     RequestResponseModule,
-    InContactModule
+    InContactModule,
+    AllUsersModule
   ]
 })
 
