@@ -6,6 +6,7 @@ import { FriendsRequestsDB } from "../../../../database/entities/friends/friends
 import { Repository } from "typeorm"
 import { InviteFriendDTO } from "../../../DTO/friends/friends.dto"
 import {IContactUser} from "./types";
+import {IReqInfoUser} from "../../../../global-types/types";
 
 @Injectable()
 export class InContactService {
@@ -19,7 +20,7 @@ export class InContactService {
     ) {}
 
     // удаляем контакт из своих контактов и удаляем себя из списка его контактов
-    async deleteFriend(dto: InviteFriendDTO, req: { login: string, id: number}): Promise<any> {
+    async deleteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
         const isUserFriend = await this.friendsUsersRepository.find({
             where: {
                 userId: req.id,
@@ -48,7 +49,7 @@ export class InContactService {
     }
 
     // получение списка контактов пользователя
-    async getContactsList(req: { login: string, id: number}): Promise<Array<IContactUser>> {
+    async getContactsList(req: IReqInfoUser): Promise<Array<IContactUser>> {
         const isUserFriend = await this.friendsUsersRepository.find({
             where: {
                 userId: req.id

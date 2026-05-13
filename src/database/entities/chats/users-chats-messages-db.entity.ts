@@ -3,7 +3,6 @@ import { UsersDB } from "../users/users-db.entity"
 import { ChatsListDB } from "./users-chats-list-db.entity"
 
 @Entity({ name: 'messages_db' })
-
 export class MessagesDB {
     @PrimaryGeneratedColumn()
     id: number
@@ -26,7 +25,14 @@ export class MessagesDB {
     @Column({
         type: 'text',
     })
-    text: string
+    valueMessage: string
+
+    // айдишник таблицы many messages -> one chat
+    @ManyToOne(() => ChatsListDB, {
+        onDelete: 'CASCADE'
+    })
+    @JoinColumn({ name: 'conversationId' })
+    conversation: ChatsListDB
 
     // отправитель
     @ManyToOne(() => UsersDB, {
@@ -34,13 +40,6 @@ export class MessagesDB {
     })
     @JoinColumn({ name: 'senderId' })
     sender: UsersDB
-
-    // айдишник таблицы
-    @ManyToOne(() => ChatsListDB, {
-        onDelete: 'CASCADE'
-    })
-    @JoinColumn({ name: 'conversationId' })
-    conversation: ChatsListDB
 
     // дата создания сообщения
     @CreateDateColumn()

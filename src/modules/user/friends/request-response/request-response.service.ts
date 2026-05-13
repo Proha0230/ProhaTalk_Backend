@@ -6,6 +6,7 @@ import { FriendsUsersDB } from "../../../../database/entities/friends/friends-us
 import { FriendsRequestsDB } from "../../../../database/entities/friends/friends-request-db.entity"
 import { Repository } from "typeorm"
 import {InviteFriendDTO} from "../../../DTO/friends/friends.dto"
+import { IReqInfoUser } from "../../../../global-types/types"
 
 @Injectable()
 export class RequestResponseService {
@@ -22,7 +23,7 @@ export class RequestResponseService {
         private readonly dataSource: DataSource
     ) {}
 
-    async sendInviteFriend(dto: InviteFriendDTO, req: { login: string, id: number}): Promise<any> {
+    async sendInviteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
         if (dto.id === req.id) {
             throw new BadRequestException('Нельзя добавить в контакты самого себя')
         }
@@ -71,7 +72,7 @@ export class RequestResponseService {
         }
     }
 
-    async cancelInviteFriend(dto: InviteFriendDTO, req: { login: string, id: number}): Promise<any> {
+    async cancelInviteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
         const request = await this.friendsRequestsRepository.findOne({
             where: {
                 senderId: req.id,
@@ -95,7 +96,7 @@ export class RequestResponseService {
         }
     }
 
-    async declineInviteFriend(dto: InviteFriendDTO, req: { login: string, id: number}): Promise<any> {
+    async declineInviteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
         const request = await this.friendsRequestsRepository.findOne({
             where: {
                 senderId: dto.id,
@@ -119,7 +120,7 @@ export class RequestResponseService {
         }
     }
 
-    async acceptInviteFriend(dto: InviteFriendDTO, req: { login: string, id: number}): Promise<any> {
+    async acceptInviteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
         // ищем заявку
         const request = await this.friendsRequestsRepository.findOne({
             where: {
@@ -194,7 +195,7 @@ export class RequestResponseService {
     }
 
     // получаем список кому мы отправили заявку на добавление в контакты (исходящие)
-    async getOutgoingRequests(req: { login: string, id: number}): Promise<any> {
+    async getOutgoingRequests(req: IReqInfoUser): Promise<any> {
         const requests = await this.friendsRequestsRepository.find({
             where: {
                 senderId: req.id,
@@ -214,7 +215,7 @@ export class RequestResponseService {
     }
 
     // получаем список кто нас добавил в контакты (входящие)
-    async getIncomingRequests(req: { login: string, id: number}): Promise<any> {
+    async getIncomingRequests(req: IReqInfoUser): Promise<any> {
         const requests = await this.friendsRequestsRepository.find({
             where: {
                 receiverId: req.id,

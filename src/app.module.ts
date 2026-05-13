@@ -10,6 +10,7 @@ import { UserProfileModule } from "./modules/user/profile/user-profile.module"
 import { RequestResponseModule } from "./modules/user/friends/request-response/request-response.module"
 import { InContactModule } from "./modules/user/friends/in-contact/in-contact.module"
 import { AllUsersModule } from "./modules/user/all-users/all-users.module"
+import { ChatsModule } from "./modules/user/chats/chats.module"
 
 loadEnvLocal()
 
@@ -34,7 +35,8 @@ loadEnvLocal()
     UserProfileModule,
     RequestResponseModule,
     InContactModule,
-    AllUsersModule
+    AllUsersModule,
+    ChatsModule
   ]
 })
 

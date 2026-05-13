@@ -1,5 +1,6 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, Index, CreateDateColumn } from 'typeorm'
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, Index, CreateDateColumn, OneToMany } from 'typeorm'
 import { UsersDB } from "../users/users-db.entity"
+import { MessagesDB } from "./users-chats-messages-db.entity"
 
 @Entity({ name: 'chats_list_db' })
 // нельзя отправить одну и ту же заявку дважды
@@ -24,14 +25,34 @@ export class ChatsListDB {
     userTwoId: number
 
     // отправитель
-    @ManyToOne(() => UsersDB)
+    @ManyToOne(() => UsersDB, {
+        onDelete: 'CASCADE'
+    })
     @JoinColumn({ name: 'userOneId' })
     userOne: UsersDB
 
     // получатель
-    @ManyToOne(() => UsersDB)
+    @ManyToOne(() => UsersDB, {
+        onDelete: 'CASCADE'
+    })
     @JoinColumn({ name: 'userTwoId' })
     userTwo: UsersDB
+
+    // one chat -> many messages
+    // связь хранится в поле conversation внутри MessagesDB
+    @OneToMany(() => MessagesDB, message => message.conversation)
+    messages: MessagesDB[]
+    // ChatsListDB.messages
+    // ↕
+    // MessagesDB.conversation
+
+    // теперь можно будет сделать так
+    // const chat = await chatsRepo.findOne({
+    //     where: { id: 1 },
+    //     relations: {
+    //         messages: true
+    //     }
+    // })
 
     // дата создания таблицы
     @CreateDateColumn()

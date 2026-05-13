@@ -4,6 +4,7 @@ import { UsersDB } from "../../../database/entities/users/users-db.entity"
 import { Repository } from "typeorm"
 import { UserProfileDto } from "../../DTO/user/profile/user-profile.dto"
 import { IObjUserProfile } from "./types/types"
+import { IReqInfoUser } from "../../../global-types/types"
 
 @Injectable()
 export class UserProfileService {
@@ -12,7 +13,7 @@ export class UserProfileService {
         private readonly usersRepository: Repository<UsersDB>,
     ) {}
 
-    async changeInfo(dto: UserProfileDto, req: { login: string, id: number}): Promise<{ message: string}> {
+    async changeInfo(dto: UserProfileDto, req: IReqInfoUser): Promise<{ message: string}> {
         // находим юзера в БД
         const user = await this.usersRepository.findOne({
             where: {
@@ -51,7 +52,7 @@ export class UserProfileService {
         }
     }
 
-    async getUserInfo(req: { login: string, id: number }): Promise<IObjUserProfile> {
+    async getUserInfo(req: IReqInfoUser): Promise<IObjUserProfile> {
         // находим юзера в БД
         const user = await this.usersRepository.findOne({
             where: {

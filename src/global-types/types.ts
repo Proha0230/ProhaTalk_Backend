@@ -7,3 +7,7 @@ export interface IReqInfoUser {
     login: string,
     id: number
 }
+
+export interface IResponseMessage {
+    message: string
+}
