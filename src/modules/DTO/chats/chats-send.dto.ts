@@ -1,4 +1,4 @@
-import {IsString, IsNotEmpty, IsEmail, MinLength, IsBoolean, Equals} from 'class-validator'
+import { IsString, IsNotEmpty, MinLength } from 'class-validator'
 import { Type } from 'class-transformer'
 
 export class ChatsMessageSendDto {
@@ -10,6 +10,6 @@ export class ChatsMessageSendDto {
     messageValue: string
 
     @Type(() => Number)
-    @IsNotEmpty({ message: 'idUserReceiving не может быть пустым' })
+    @IsNotEmpty({ message: 'id не может быть пустым' })
     id: number
 }

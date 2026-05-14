@@ -7,7 +7,7 @@ import { MessagesDB } from "../../../database/entities/chats/users-chats-message
 import { Repository } from "typeorm"
 import { ChatsMessageSendDto } from "../../DTO/chats/chats-send.dto"
 import { IReqInfoUser, IResponseMessage } from "../../../global-types/types"
-import {IChatsUser, IMassagesForChatUser} from "./types"
+import {IChatsUser, IMassage, IMassagesForChatUser} from "./types"
 import {ChatsGetListMessagesDto} from "../../DTO/chats/chats-get-list-messages.dto"
 
 @Injectable()
@@ -23,7 +23,7 @@ export class ChatsService {
         private readonly messageRepository: Repository<MessagesDB>
     ) {}
 
-    async messageSend(dto: ChatsMessageSendDto, req: IReqInfoUser): Promise<IResponseMessage> {
+    async messageSend(dto: ChatsMessageSendDto, req: IReqInfoUser, isWebSocket?: boolean): Promise<IResponseMessage | MessagesDB> {
         // проверяем что юзер не пишет сам себе
         if (dto.id === req.id) {
             throw new BadRequestException('Нельзя написать самому себе!')
@@ -72,7 +72,11 @@ export class ChatsService {
 
         await this.messageRepository.save(record)
 
-        return { message: "Сообщение отправлено"}
+        if (isWebSocket) {
+            return record
+        } else {
+            return {message: "Сообщение отправлено"}
+        }
     }
 
     async getChatsList(req: IReqInfoUser): Promise<Array<IChatsUser>> {
@@ -104,6 +108,38 @@ export class ChatsService {
         }
 
         return response
+    }
+
+    async getChatMessage(message: MessagesDB): Promise<IMassage | {}> {
+        const getMessageInDB = await this.messageRepository.findOne({
+            where: {
+                conversationId: message.conversationId,
+                senderId: message.senderId,
+                valueMessage: message.valueMessage
+            },
+
+            select: {
+                id: true,
+                valueMessage: true,
+                createdAt: true,
+                sender: {
+                    login: true
+                }
+            },
+
+            relations: ['sender']
+        })
+
+        if (getMessageInDB) {
+            return {
+                idMessage: getMessageInDB.id,
+                value: getMessageInDB.valueMessage,
+                created: getMessageInDB.createdAt,
+                userLoginSendMessage: getMessageInDB.sender.login,
+            }
+        }
+
+        return {}
     }
 
     async getChatsListMessages(req: IReqInfoUser, dto: ChatsGetListMessagesDto): Promise<IMassagesForChatUser> {

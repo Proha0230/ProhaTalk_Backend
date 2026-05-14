@@ -1,9 +1,11 @@
-import {Injectable} from '@nestjs/common'
-import {InjectRepository} from "@nestjs/typeorm"
-import {UsersDB} from "../../../database/entities/users/users-db.entity"
-import {FriendsUsersDB} from "../../../database/entities/friends/friends-users-db.entity"
-import {FriendsRequestsDB} from "../../../database/entities/friends/friends-request-db.entity"
-import {Repository} from "typeorm"
+import { Injectable, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from "@nestjs/typeorm"
+import { UsersDB } from "../../../database/entities/users/users-db.entity"
+import { FriendsUsersDB } from "../../../database/entities/friends/friends-users-db.entity"
+import { FriendsRequestsDB } from "../../../database/entities/friends/friends-request-db.entity"
+import { Repository } from "typeorm"
+import { IGetCurrentUserDTO } from "../../DTO/all-users/all-users.dto"
+import { IUser } from "./types/all-users.types"
 
 @Injectable()
 export class AllUsersService {
@@ -16,7 +18,7 @@ export class AllUsersService {
         private readonly friendsRequestsRepository: Repository<FriendsRequestsDB>
     ) {}
 
-    async getAllUsers(): Promise<any> {
+    async getAllUsers(): Promise<Array<IUser>> {
         // когда не указываем where: {} - то отдадутся все записи
         return await this.usersRepository.find({
             // select - выбираем то что конкретно нам отдаст БД в ответе
@@ -28,5 +30,27 @@ export class AllUsersService {
                 status: true
             }
         })
+    }
+
+    async getCurrentUsers(dto: IGetCurrentUserDTO): Promise<IUser> {
+        const user = await this.usersRepository.findOne({
+            where: {
+                id: dto.id
+            },
+            // select - выбираем то что конкретно нам отдаст БД в ответе
+            select: {
+                id: true,
+                login: true,
+                name: true,
+                lastname: true,
+                status: true
+            }
+        })
+
+        if (!user) {
+            throw new NotFoundException("Пользователь не найден")
+        }
+
+        return user
     }
 }

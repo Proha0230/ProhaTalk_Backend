@@ -3,8 +3,9 @@ import { AuthGuard } from "@nestjs/passport"
 import type { IReqInfo, IResponseMessage } from "../../../global-types/types"
 import { ChatsService } from "./chats.service"
 import { ChatsMessageSendDto } from "../../DTO/chats/chats-send.dto"
-import {IChatsUser, IMassagesForChatUser} from "./types";
+import { IChatsUser, IMassagesForChatUser } from "./types"
 import { ChatsGetListMessagesDto } from "../../DTO/chats/chats-get-list-messages.dto"
+import { MessagesDB } from "../../../database/entities/chats/users-chats-messages-db.entity"
 
 @Controller('chats')
 export class ChatsController {
@@ -15,8 +16,8 @@ export class ChatsController {
     messageSend(
         @Body() dto: ChatsMessageSendDto,
         @Req() req: IReqInfo
-    ): Promise<IResponseMessage> {
-        return this.chatsService.messageSend(dto, req.user)
+    ): Promise<IResponseMessage | MessagesDB> {
+        return this.chatsService.messageSend(dto, req.user, false)
     }
 
     @Get('/get-list')

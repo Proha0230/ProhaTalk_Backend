@@ -1,4 +1,4 @@
-export interface IContactUser  {
+export interface IUser {
     id: number,
     login: string,
     name: string | null,

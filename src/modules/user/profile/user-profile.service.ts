@@ -3,7 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { UsersDB } from "../../../database/entities/users/users-db.entity"
 import { Repository } from "typeorm"
 import { UserProfileDto } from "../../DTO/user/profile/user-profile.dto"
-import { IObjUserProfile } from "./types/types"
+import { IObjUserProfile } from "./types/profile.types"
 import { IReqInfoUser } from "../../../global-types/types"
 
 @Injectable()

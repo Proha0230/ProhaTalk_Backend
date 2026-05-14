@@ -11,6 +11,7 @@ import { RequestResponseModule } from "./modules/user/friends/request-response/r
 import { InContactModule } from "./modules/user/friends/in-contact/in-contact.module"
 import { AllUsersModule } from "./modules/user/all-users/all-users.module"
 import { ChatsModule } from "./modules/user/chats/chats.module"
+import { WsUserModule } from "./modules/websocket/user/ws-user.module"
 
 loadEnvLocal()
 
@@ -36,7 +37,8 @@ loadEnvLocal()
     RequestResponseModule,
     InContactModule,
     AllUsersModule,
-    ChatsModule
+    ChatsModule,
+    WsUserModule
   ]
 })
 
