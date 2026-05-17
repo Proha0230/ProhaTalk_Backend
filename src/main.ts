@@ -7,6 +7,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true, // Удаляет лишние поля
+    forbidNonWhitelisted: true, // если клиент пришел лишние поля которых не ожидает бэк, то выдаст 400 ошибку
     transform: true, // @Type(() => Boolean) преобразования к нужному типу в DTO.
   }))
 

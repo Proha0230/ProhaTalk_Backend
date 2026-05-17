@@ -4,6 +4,9 @@ import { WsUserService } from "./ws-user.service"
 import { JwtModule } from "@nestjs/jwt"
 import { ConfigService } from "@nestjs/config"
 import { ChatsModule } from "../../user/chats/chats.module"
+import { TypeOrmModule } from "@nestjs/typeorm"
+import { UsersDB } from "../../../database/entities/users/users-db.entity"
+import { UniversalModule } from "../../user/universal/universal.module"
 
 @Module({
     imports: [
@@ -16,8 +19,11 @@ import { ChatsModule } from "../../user/chats/chats.module"
                 }
             })
         }),
-        // импортируем модуль с чатами
-        ChatsModule
+        TypeOrmModule.forFeature([
+            UsersDB
+        ]),
+        ChatsModule,
+        UniversalModule
     ],
     providers: [WsUserGateway, WsUserService]
 })

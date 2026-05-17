@@ -1,11 +1,23 @@
 import { Injectable } from "@nestjs/common"
 import { Server, Socket } from "socket.io"
+import { isEmpty as _isEmpty } from "lodash"
 import { WsJoinChatRoomDto } from "../../DTO/websocket/user-chat/send-message.dto"
-import type { AuthenticatedSocket } from "./types/index.types"
+import {AuthenticatedSocket, IUserJWTInfo} from "./types/index.types"
+import { InjectRepository } from "@nestjs/typeorm"
+import { UsersDB } from "../../../database/entities/users/users-db.entity"
+import { Repository } from "typeorm"
+import { JwtService } from "@nestjs/jwt"
+import { WsException } from "@nestjs/websockets"
+import { UniversalService } from "../../user/universal/universal.service"
 
 @Injectable()
 export class WsUserService {
-    constructor() {}
+    constructor(
+        @InjectRepository(UsersDB)
+        private readonly usersRepository: Repository<UsersDB>,
+        private readonly jwtService: JwtService,
+        private readonly universalService: UniversalService
+    ) {}
 
     private clients: Array<Socket> = []
 
@@ -33,6 +45,26 @@ export class WsUserService {
                 userLogin: client.user.login
             }
         })
+    }
+
+    async onUpdateUserLastSeen(client: Socket) {
+        const token: string = client.handshake?.auth?.token
+        const userJWTInfo: IUserJWTInfo = await this.jwtService.verifyAsync(token)
+
+        if (!_isEmpty(userJWTInfo) && userJWTInfo.id) {
+            // нахождение и проверка существования юзера, чтобы обновить lastSeen
+            const user = await this.universalService.universalCheckingUserExistence(userJWTInfo.id)
+
+            if (!user) {
+                throw new WsException('Пользователь не найден')
+            }
+
+            user.lastSeen = new Date()
+            await this.usersRepository.save(user)
+
+        } else {
+            throw new WsException("JWT невалиден")
+        }
     }
 
     removeClient(client: Socket) {

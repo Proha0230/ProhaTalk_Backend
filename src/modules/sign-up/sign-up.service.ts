@@ -9,7 +9,7 @@ import * as bcrypt from 'bcrypt'
 export class SignUpService {
     constructor(
         @InjectRepository(UsersDB)
-        private readonly usersRepository: Repository<UsersDB>,
+        private readonly usersRepository: Repository<UsersDB>
     ) {}
 
     async createUser(dto: SignUpDto) {

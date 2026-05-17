@@ -1,35 +1,26 @@
-import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common'
+import { Injectable, NotFoundException} from '@nestjs/common'
 import { InjectRepository } from "@nestjs/typeorm"
-import { UsersDB } from "../../../../database/entities/users/users-db.entity"
 import { FriendsUsersDB } from "../../../../database/entities/friends/friends-users-db.entity"
-import { FriendsRequestsDB } from "../../../../database/entities/friends/friends-request-db.entity"
 import { Repository } from "typeorm"
 import { InviteFriendDTO } from "../../../DTO/friends/friends.dto"
 import { IContactUser } from "./types"
-import type { IReqInfo, IReqInfoUser} from "../../../../global-types/types"
+import type { IReqInfoUser} from "../../../../global-types/types"
 import { IGetCurrentUserDTO } from "../../../DTO/all-users/all-users.dto"
+import { UniversalService } from "../../universal/universal.service"
 
 @Injectable()
 export class InContactService {
     constructor(
-        @InjectRepository(UsersDB)
-        private readonly usersRepository: Repository<UsersDB>,
-        @InjectRepository(FriendsUsersDB)
-        private readonly friendsUsersRepository: Repository<FriendsUsersDB>,
-        @InjectRepository(FriendsRequestsDB)
-        private readonly friendsRequestsRepository: Repository<FriendsRequestsDB>
+        @InjectRepository(FriendsUsersDB) private readonly friendsUsersRepository: Repository<FriendsUsersDB>,
+        private readonly universalService: UniversalService
     ) {}
 
     // удаляем контакт из своих контактов и удаляем себя из списка его контактов
     async deleteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
-        const isUserFriend = await this.friendsUsersRepository.findOne({
-            where: {
-                userId: req.id,
-                friendId: dto.id
-            }
-        })
+        // проверяем дружбу между юзерами
+        const usersFriendship = await this.universalService.universalCheckingFriendship(req.id, dto.id)
 
-        if (!isUserFriend) {
+        if (!usersFriendship) {
             throw new NotFoundException("Этого пользователя в ваших контактах не найдено")
         }
 
@@ -82,33 +73,17 @@ export class InContactService {
 
     // получение текущего контакта
     async getCurrentContact(dto: IGetCurrentUserDTO, req: IReqInfoUser): Promise<IContactUser> {
-        // проверяем на то - существует ли вообще запрашиваемый юзер
-        const user = await this.usersRepository.findOne({
-            where: {
-                id: dto.id
-            },
-            select: {
-                id: true,
-                login: true,
-                name: true,
-                lastname: true,
-                status: true
-            }
-        })
+        // нахождение и проверка существования юзера
+        const user = await this.universalService.universalCheckingUserExistence(dto.id)
 
         if (!user) {
             throw new NotFoundException("Пользователь не найден")
         }
 
         // проверяем дружбу между юзерами
-        const isUserFriend = await this.friendsUsersRepository.findOne({
-            where: {
-                userId: req.id,
-                friendId: dto.id
-            }
-        })
+        const usersFriendship = await this.universalService.universalCheckingFriendship(req.id, dto.id)
 
-        if (!isUserFriend || !isUserFriend) {
+        if (!usersFriendship) {
             throw new NotFoundException("Этого пользователя в ваших контактах не найдено")
         }
 

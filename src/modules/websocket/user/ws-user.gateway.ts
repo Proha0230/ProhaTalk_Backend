@@ -10,7 +10,7 @@ import {
 import { Server, Socket } from "socket.io"
 import { WsUserService } from "./ws-user.service"
 import { WsJoinChatRoomDto } from "../../DTO/websocket/user-chat/send-message.dto"
-import { UseGuards, UsePipes } from "@nestjs/common"
+import { UseGuards, UsePipes} from "@nestjs/common"
 import { WsValidationPipe } from "../validation-pipe/ws-validation.pipe"
 import { WsJwtGuard } from "../jwt-guard/ws-jwt.guard"
 import type { AuthenticatedSocket } from "./types/index.types"
@@ -55,7 +55,6 @@ export class WsUserGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             this.server.to(nameRoom).emit('new-message', resultMessage)
         } catch (error) {
-            console.log(error)
             throw new WsException(error.message)
         }
     }
@@ -93,10 +92,15 @@ export class WsUserGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     // отключаем клиента по ws от сервера
-    handleDisconnect(@ConnectedSocket() client: Socket) {
+    async handleDisconnect(@ConnectedSocket() client: Socket) {
         if(this.wsUserChatService.getClientById(client.id)) {
-            this.wsUserChatService.removeClient(client)
-            this.server.emit('online-users', this.wsUserChatService.getOnlineUsers())
+            try {
+                // обновляем ему ключ lastSeen в UserDB
+                await this.wsUserChatService.onUpdateUserLastSeen(client)
+            } finally {
+                this.wsUserChatService.removeClient(client)
+                this.server.emit('online-users', this.wsUserChatService.getOnlineUsers())
+            }
         }
     }
 }

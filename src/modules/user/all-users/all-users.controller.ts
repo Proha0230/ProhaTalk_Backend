@@ -3,7 +3,7 @@ import { AuthGuard } from "@nestjs/passport"
 import type { IReqInfo } from "../../../global-types/types"
 import { AllUsersService } from "./all-users.service"
 import { IGetCurrentUserDTO } from "../../DTO/all-users/all-users.dto"
-import { IUser } from "./types/all-users.types"
+import { IUser, IUserInAllUsers } from "./types/all-users.types"
 
 @Controller('all-users')
 export class AllUsersController {
@@ -22,7 +22,7 @@ export class AllUsersController {
     getCurrentUsers(
         @Query() dto: IGetCurrentUserDTO,
         @Req() req: IReqInfo
-    ): Promise<IUser> {
-        return this.allUsersService.getCurrentUsers(dto)
+    ): Promise<IUserInAllUsers> {
+        return this.allUsersService.getCurrentUser(dto, req.user)
     }
 }

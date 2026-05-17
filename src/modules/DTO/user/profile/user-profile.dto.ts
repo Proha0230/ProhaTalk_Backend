@@ -15,7 +15,7 @@ export class UserProfileDto {
     @Type(() => String)
     @IsString({ message: 'Поле password должен быть string' })
     @MaxLength(20, { message: "Фамилия должна быть не длиннее 20 символов"})
-    lastName?: string
+    lastname?: string
 
 
     // Статус

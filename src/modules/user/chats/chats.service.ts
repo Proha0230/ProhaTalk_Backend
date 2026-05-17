@@ -1,26 +1,21 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common'
 import { InjectRepository } from "@nestjs/typeorm"
-import { UsersDB } from "../../../database/entities/users/users-db.entity"
-import { FriendsUsersDB } from "../../../database/entities/friends/friends-users-db.entity"
 import { ChatsListDB } from "../../../database/entities/chats/users-chats-list-db.entity"
 import { MessagesDB } from "../../../database/entities/chats/users-chats-messages-db.entity"
 import { Repository } from "typeorm"
 import { ChatsMessageSendDto } from "../../DTO/chats/chats-send.dto"
 import { IReqInfoUser, IResponseMessage } from "../../../global-types/types"
-import {IChatsUser, IMassage, IMassagesForChatUser} from "./types"
-import {ChatsGetListMessagesDto} from "../../DTO/chats/chats-get-list-messages.dto"
+import { IChatsUser, IMassage, IMassagesForChatUser } from "./types"
+import { ChatsGetListMessagesDto } from "../../DTO/chats/chats-get-list-messages.dto"
+import { UniversalService } from "../universal/universal.service"
 
 @Injectable()
 export class ChatsService {
     constructor(
-        @InjectRepository(UsersDB)
-        private readonly usersRepository: Repository<UsersDB>,
-        @InjectRepository(FriendsUsersDB)
-        private readonly friendsUsersRepository: Repository<FriendsUsersDB>,
-        @InjectRepository(ChatsListDB)
-        private readonly chatsListRepository: Repository<ChatsListDB>,
-        @InjectRepository(MessagesDB)
-        private readonly messageRepository: Repository<MessagesDB>
+        @InjectRepository(ChatsListDB) private readonly chatsListRepository: Repository<ChatsListDB>,
+        @InjectRepository(MessagesDB) private readonly messageRepository: Repository<MessagesDB>,
+
+        private readonly universalService: UniversalService
     ) {}
 
     async messageSend(dto: ChatsMessageSendDto, req: IReqInfoUser, isWebSocket?: boolean): Promise<IResponseMessage | MessagesDB> {
@@ -29,16 +24,11 @@ export class ChatsService {
             throw new BadRequestException('Нельзя написать самому себе!')
         }
 
-        // проверяем дружбу с тем юзером которому хотим написать сообщение
-        const existingFriend = await this.friendsUsersRepository.findOne({
-            where: {
-                userId: req.id,
-                friendId: dto.id
-            }
-        })
+        // проверяем дружбу между юзерами
+        const usersFriendship = await this.universalService.universalCheckingFriendship(req.id, dto.id)
 
-        if (!existingFriend) {
-            throw new BadRequestException('Пользователя нет в ваших контактах!')
+        if (!usersFriendship) {
+            throw new NotFoundException("Этого пользователя в ваших контактах не найдено")
         }
 
         // сортируем id юзеров чтобы меньший был всегда userOneId а больший userTwoId
@@ -90,6 +80,16 @@ export class ChatsService {
             relations: {
                 userOne: true,
                 userTwo: true
+            },
+            select: {
+                userOne: {
+                    id: true,
+                    login: true
+                },
+                userTwo: {
+                    id: true,
+                    login: true
+                }
             }
         })
 
@@ -143,27 +143,18 @@ export class ChatsService {
     }
 
     async getChatsListMessages(req: IReqInfoUser, dto: ChatsGetListMessagesDto): Promise<IMassagesForChatUser> {
-        // проверяем что пользователь с которым запрашивается чат существует
-        const userWithWhomChat = await this.usersRepository.findOne({
-            where: {
-                id: dto.id
-            }
-        })
+        // нахождение и проверка существования юзера с которым запрашивается чат
+        const userWithWhomChat = await this.universalService.universalCheckingUserExistence(dto.id)
 
         if (!userWithWhomChat) {
-            throw new BadRequestException('Пользователя не существует!')
+            throw new BadRequestException('Пользователь не найден')
         }
 
-        // проверяем дружбу с тем юзером с которым хотим получить переписку
-        const existingFriend = await this.friendsUsersRepository.findOne({
-            where: {
-                userId: req.id,
-                friendId: dto.id
-            }
-        })
+        // проверяем дружбу между юзерами
+        const usersFriendship = await this.universalService.universalCheckingFriendship(req.id, dto.id)
 
-        if (!existingFriend) {
-            throw new BadRequestException('Пользователя нет в ваших контактах!')
+        if (!usersFriendship) {
+            throw new NotFoundException("Этого пользователя в ваших контактах не найдено")
         }
 
         // сортируем id юзеров чтобы меньший был всегда userOneId а больший userTwoId
@@ -192,7 +183,7 @@ export class ChatsService {
         // если запись чата в таблице чатов есть - то ищем все сообщения по этому id чата
         const messagesList = await this.messageRepository.find({
             where: {
-                conversationId: existingRecordChatInTable.id,
+                conversationId: existingRecordChatInTable.id
             },
 
             select: {

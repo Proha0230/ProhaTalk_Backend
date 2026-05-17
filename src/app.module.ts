@@ -12,6 +12,7 @@ import { InContactModule } from "./modules/user/friends/in-contact/in-contact.mo
 import { AllUsersModule } from "./modules/user/all-users/all-users.module"
 import { ChatsModule } from "./modules/user/chats/chats.module"
 import { WsUserModule } from "./modules/websocket/user/ws-user.module"
+import {UniversalModule} from "./modules/user/universal/universal.module";
 
 loadEnvLocal()
 
@@ -38,7 +39,8 @@ loadEnvLocal()
     InContactModule,
     AllUsersModule,
     ChatsModule,
-    WsUserModule
+    WsUserModule,
+    UniversalModule
   ]
 })
 

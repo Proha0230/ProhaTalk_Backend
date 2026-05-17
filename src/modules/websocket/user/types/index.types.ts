@@ -9,3 +9,10 @@ export interface IMessage {
 export interface AuthenticatedSocket extends Socket {
     user: IReqInfoUser
 }
+
+export interface IUserJWTInfo {
+    id: number,
+    login: string,
+    iat: number,
+    exp: number
+}
