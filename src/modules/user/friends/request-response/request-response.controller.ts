@@ -4,7 +4,7 @@ import { RequestResponseService } from "./request-response.service"
 import { InviteFriendDTO } from "../../../DTO/friends/friends.dto"
 import type { IReqInfo } from "../../../../global-types/types"
 
-@Controller('invite-friend')
+@Controller('api/invite-friend')
 export class RequestResponseController {
     constructor(private readonly requestResponseService: RequestResponseService) {}
 

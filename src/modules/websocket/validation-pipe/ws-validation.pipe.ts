@@ -8,7 +8,6 @@ export class WsValidationPipe extends ValidationPipe {
             whitelist: true,
             transform: true,
             exceptionFactory: (errors) => {
-                console.log("error", errors)
                 return new WsException(errors.map(err => err.constraints))
             }
         })

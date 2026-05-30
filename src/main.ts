@@ -13,7 +13,11 @@ async function bootstrap() {
 
   // разрешаем корсы для клиент фронта http://localhost:3000
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: [
+      process.env.API_URL_DEV_CORS,
+      process.env.API_URL_PROD_CORS,
+      process.env.API_URL_PROD_WEB_SOCKET_CORD
+    ],
     methods: [
       'GET',
       'POST',
@@ -28,9 +32,9 @@ async function bootstrap() {
     credentials: true
   })
 
-  await app.listen(process.env.PORT ?? 3000)
+  await app.listen(process.env.PORT ?? 3001, '0.0.0.0') // слушаем 127.0.0.1:3001 куда ссылается nginx
 
-  console.log('Server started on port', process.env.PORT ?? 3000)
+  console.log('Server started on port', process.env.PORT ?? 3001)
 }
 
 bootstrap()

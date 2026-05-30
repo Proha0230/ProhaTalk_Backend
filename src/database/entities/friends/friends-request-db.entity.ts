@@ -24,12 +24,12 @@ export class FriendsRequestsDB {
     receiverId: number
 
     // отправитель
-    @ManyToOne(() => UsersDB)
+    @ManyToOne(() => UsersDB, (usersDB) => usersDB.id)
     @JoinColumn({ name: 'senderId' })
     sender: UsersDB
 
     // получатель
-    @ManyToOne(() => UsersDB)
+    @ManyToOne(() => UsersDB, (usersDB) => usersDB.id)
     @JoinColumn({ name: 'receiverId' })
     receiver: UsersDB
 

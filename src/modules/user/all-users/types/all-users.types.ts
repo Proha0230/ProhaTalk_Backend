@@ -4,7 +4,8 @@ export interface IUser {
     name: string | null,
     lastname: string | null,
     status: string | null,
-    lastSeen: Date
+    lastSeen: Date,
+    avatar: string | null
 }
 
 export interface IUserInAllUsers {

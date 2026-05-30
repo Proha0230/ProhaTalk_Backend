@@ -5,14 +5,13 @@ import { AllUsersService } from "./all-users.service"
 import { IGetCurrentUserDTO } from "../../DTO/all-users/all-users.dto"
 import { IUser, IUserInAllUsers } from "./types/all-users.types"
 
-@Controller('all-users')
+@Controller('api/all-users')
 export class AllUsersController {
     constructor(private readonly allUsersService: AllUsersService) {}
 
     @Get()
     @UseGuards(AuthGuard('jwt'))
     getAllUsers(
-        @Req() req: IReqInfo
     ): Promise<Array<IUser>> {
         return this.allUsersService.getAllUsers()
     }

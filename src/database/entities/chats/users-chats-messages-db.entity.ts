@@ -17,25 +17,40 @@ export class MessagesDB {
     // юзер который написал сообщение
     @Index()
     @Column({
-        type: 'int',
+        type: 'int'
     })
     senderId: number
 
     // текстовой контент сообщения
     @Column({
-        type: 'text',
+        type: 'text'
     })
     valueMessage: string
 
+    @Column({
+        type: 'boolean'
+    })
+    isText: boolean
+
+    @Column({
+        type: 'boolean'
+    })
+    isAudio: boolean
+
+    @Column({
+        type: 'boolean'
+    })
+    isPicture: boolean
+
     // айдишник таблицы many messages -> one chat
-    @ManyToOne(() => ChatsListDB, {
+    @ManyToOne(() => ChatsListDB, (chatsListDb) => chatsListDb.id, {
         onDelete: 'CASCADE'
     })
     @JoinColumn({ name: 'conversationId' })
     conversation: ChatsListDB
 
     // отправитель
-    @ManyToOne(() => UsersDB, {
+    @ManyToOne(() => UsersDB, (usersDB) => usersDB.id, {
         onDelete: 'CASCADE'
     })
     @JoinColumn({ name: 'senderId' })

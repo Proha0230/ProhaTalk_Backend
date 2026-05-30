@@ -190,6 +190,9 @@ export class ChatsService {
                 id: true,
                 valueMessage: true,
                 createdAt: true,
+                isPicture: true,
+                isAudio: true,
+                isText: true,
                 sender: {
                     login: true
                 }
@@ -210,6 +213,9 @@ export class ChatsService {
                     value: item.valueMessage,
                     created: item.createdAt,
                     userLoginSendMessage: item.sender.login,
+                    isPicture: item.isPicture,
+                    isAudio: item.isAudio,
+                    isText: item.isText
                 }
             })
         }

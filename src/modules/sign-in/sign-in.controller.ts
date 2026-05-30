@@ -1,8 +1,8 @@
-import { Body, Controller, Post, Get, Headers, BadRequestException } from '@nestjs/common'
+import { Body, Controller, Post } from '@nestjs/common'
 import { SignInService } from './sign-in.service'
 import { SignInDto } from "../DTO/sign-in/sign-in.dto"
 
-@Controller('sign-in')
+@Controller('api/sign-in')
 export class SignInController {
     constructor(private readonly authService: SignInService) {}
 

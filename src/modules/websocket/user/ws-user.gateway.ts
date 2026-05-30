@@ -23,11 +23,12 @@ import { JwtService } from "@nestjs/jwt"
 @UseGuards(WsJwtGuard)
 // запуск DTO если не проходит, то будет возвращен WsException, который сможет прослушать клиент
 @UsePipes(WsValidationPipe)
-// ws://localhost:3001/user-chat
+// ws://localhost:3001/user
 @WebSocketGateway({
-    namespace: 'user',
+    namespace: 'api/user-ws',
     cors: {
-        origin: "*"
+        origin: "*",
+        credentials: true
     }
 })
 export class WsUserGateway implements OnGatewayConnection, OnGatewayDisconnect {

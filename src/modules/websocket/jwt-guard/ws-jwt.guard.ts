@@ -8,7 +8,7 @@ export class WsJwtGuard implements CanActivate {
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const client = context.switchToWs().getClient()
         // здесь лежит auth-token который мы передаем на клиенте
-        // const socket = io('ws://localhost:3001/user-chat', {
+        // const socket = io('ws://localhost:3001/user', {
         //     auth: {
         //         token: 'JWT_TOKEN'
         //     }

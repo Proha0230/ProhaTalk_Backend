@@ -25,13 +25,13 @@ export class FriendsUsersDB {
     friendId: number
 
     // пользователь
-    @ManyToOne(() => UsersDB)
+    @ManyToOne(() => UsersDB, (usersDB) => usersDB.id)
     @JoinColumn({ name: 'userId' })
     user: UsersDB // сюда подставится primaryKey по умолчанию из UsersDB т.е id
 
 
     // объект друга
-    @ManyToOne(() => UsersDB)
+    @ManyToOne(() => UsersDB, (usersDB) => usersDB.id)
     @JoinColumn({ name: 'friendId' })
     friend: UsersDB // сюда подставится primaryKey по умолчанию из UsersDB т.е id
 

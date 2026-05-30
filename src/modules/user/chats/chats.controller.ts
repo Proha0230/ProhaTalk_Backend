@@ -7,7 +7,7 @@ import { IChatsUser, IMassagesForChatUser } from "./types"
 import { ChatsGetListMessagesDto } from "../../DTO/chats/chats-get-list-messages.dto"
 import { MessagesDB } from "../../../database/entities/chats/users-chats-messages-db.entity"
 
-@Controller('chats')
+@Controller('api/chats')
 export class ChatsController {
     constructor(private readonly chatsService: ChatsService) {}
 

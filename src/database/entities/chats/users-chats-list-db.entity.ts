@@ -25,14 +25,14 @@ export class ChatsListDB {
     userTwoId: number
 
     // отправитель
-    @ManyToOne(() => UsersDB, {
+    @ManyToOne(() => UsersDB, (userDB) => userDB.id,  {
         onDelete: 'CASCADE'
     })
     @JoinColumn({ name: 'userOneId' })
     userOne: UsersDB
 
     // получатель
-    @ManyToOne(() => UsersDB, {
+    @ManyToOne(() => UsersDB, (userDB) => userDB.id, {
         onDelete: 'CASCADE'
     })
     @JoinColumn({ name: 'userTwoId' })

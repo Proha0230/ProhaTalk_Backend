@@ -55,7 +55,8 @@ export class InContactService {
                     login: true,
                     name: true,
                     lastname: true,
-                    status: true
+                    status: true,
+                    avatar: true
                 }
             }
         })

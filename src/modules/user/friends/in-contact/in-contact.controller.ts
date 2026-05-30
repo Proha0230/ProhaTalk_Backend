@@ -6,7 +6,7 @@ import { InContactService } from "./in-contact.service"
 import { IGetCurrentUserDTO } from "../../../DTO/all-users/all-users.dto"
 import { IContactUser } from "./types"
 
-@Controller('in-contact')
+@Controller('api/in-contact')
 export class InContactController {
     constructor(private readonly inContactService: InContactService) {}
 

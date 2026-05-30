@@ -13,4 +13,7 @@ export interface IMassage {
     value: string
     created: Date
     userLoginSendMessage: string
+    isAudio: boolean
+    isPicture: boolean
+    isText: true
 }

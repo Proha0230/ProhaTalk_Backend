@@ -73,6 +73,15 @@ export class UsersDB {
     })
     lastname: string | null
 
+    // названия файла аватара
+    @Column({
+        type: 'varchar',
+        length: 255,
+        nullable: true,
+        default: null
+    })
+    avatar: string | null
+
     @CreateDateColumn()
     createdAt: Date
 

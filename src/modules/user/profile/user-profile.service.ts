@@ -1,4 +1,4 @@
-import {BadRequestException, Injectable} from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { InjectRepository } from "@nestjs/typeorm"
 import { UsersDB } from "../../../database/entities/users/users-db.entity"
 import { Repository } from "typeorm"
@@ -6,6 +6,7 @@ import { UserProfileDto } from "../../DTO/user/profile/user-profile.dto"
 import { IObjUserProfile } from "./types/profile.types"
 import { IReqInfoUser } from "../../../global-types/types"
 import { UniversalService } from "../universal/universal.service"
+import * as fs from 'fs'
 
 @Injectable()
 export class UserProfileService {
@@ -58,5 +59,55 @@ export class UserProfileService {
         }
 
         return user
+    }
+
+    async changeAvatar(avatarFile: Express.Multer.File, req: IReqInfoUser): Promise<{ message: string}> {
+        // получаем юзера
+        const user = await this.universalService.universalCheckingUserExistence(req.id)
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        // получаем изображение и сохраняем его в БД (SSD) и возвращаем название файла import { randomUUID } from 'crypto'
+        const avatarWrite = await this.universalService.universalCreateBlobImageInDB(req.id, "a", avatarFile)
+
+        // затем мы возвращенное название файла записываем в user_db колонку avatar import { randomUUID } from 'crypto'
+        user.avatar = avatarWrite.fileName
+
+        await this.usersRepository.save(user)
+
+        return { message: "Ваше фото изменено успешно!"}
+    }
+
+    async getUserAvatar(req: IReqInfoUser): Promise<fs.ReadStream | null> {
+        // получаем юзера
+        const user = await this.universalService.universalCheckingUserExistence(req.id)
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        if (!user.avatar) {
+            return null
+        }
+
+        return this.universalService.getBlobFileInDB(user.id, user.avatar, "a")
+    }
+
+    async deleteAvatar(req: IReqInfoUser): Promise<{ message: string }> {
+        // получаем юзера
+        const user = await this.universalService.universalCheckingUserExistence(req.id)
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        // очищаем его аватар
+        user.avatar = null
+
+        await this.usersRepository.save(user)
+
+        return { message: "Ваше фото удалено успешно!"}
     }
 }

@@ -189,7 +189,8 @@ export class RequestResponseService {
                     name: true,
                     lastname: true,
                     lastSeen: true,
-                    status: true
+                    status: true,
+                    avatar: true
                 }
             }
         })
@@ -222,7 +223,8 @@ export class RequestResponseService {
                     name: true,
                     lastname: true,
                     lastSeen: true,
-                    status: true
+                    status: true,
+                    avatar: true
                 }
             }
         })
