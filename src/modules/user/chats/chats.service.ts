@@ -3,11 +3,12 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { ChatsListDB } from "../../../database/entities/chats/users-chats-list-db.entity"
 import { MessagesDB } from "../../../database/entities/chats/users-chats-messages-db.entity"
 import { Repository } from "typeorm"
-import { ChatsMessageSendDto } from "../../DTO/chats/chats-send.dto"
+import { ChatsSendTextMessageDto } from "../../DTO/chats/chats-send-text-message.dto"
 import { IReqInfoUser, IResponseMessage } from "../../../global-types/types"
 import { IChatsUser, IMassage, IMassagesForChatUser } from "./types"
 import { ChatsGetListMessagesDto } from "../../DTO/chats/chats-get-list-messages.dto"
 import { UniversalService } from "../universal/universal.service"
+import fs from "fs"
 
 @Injectable()
 export class ChatsService {
@@ -18,7 +19,7 @@ export class ChatsService {
         private readonly universalService: UniversalService
     ) {}
 
-    async messageSend(dto: ChatsMessageSendDto, req: IReqInfoUser, isWebSocket?: boolean): Promise<IResponseMessage | MessagesDB> {
+    async messageTextSend(dto: ChatsSendTextMessageDto, req: IReqInfoUser, isWebSocket?: boolean): Promise<IResponseMessage | MessagesDB> {
         // проверяем что юзер не пишет сам себе
         if (dto.id === req.id) {
             throw new BadRequestException('Нельзя написать самому себе!')
@@ -57,7 +58,10 @@ export class ChatsService {
         const record = this.messageRepository.create({
             conversationId: existingRecordChatInTable.id,
             senderId: req.id,
-            valueMessage: dto.messageValue
+            valueMessage: dto.messageValue,
+            isAudio: false,
+            isText: true,
+            isPicture: false
         })
 
         await this.messageRepository.save(record)
@@ -65,8 +69,148 @@ export class ChatsService {
         if (isWebSocket) {
             return record
         } else {
-            return {message: "Сообщение отправлено"}
+            return { message: "Сообщение отправлено" }
         }
+    }
+
+    // отправка голосового сообщения и сохранение ее в БД (SSD)
+    async messageVoiceSend(voiceMessageFile: Express.Multer.File, req: IReqInfoUser, userIDWhomSending: string) {
+        // проверяем что юзер не пишет сам себе
+        if (+userIDWhomSending === req.id) {
+            throw new BadRequestException('Нельзя написать самому себе!')
+        }
+
+        // проверяем дружбу между юзерами
+        const usersFriendship = await this.universalService.universalCheckingFriendship(req.id, +userIDWhomSending)
+
+        if (!usersFriendship) {
+            throw new NotFoundException("Этого пользователя в ваших контактах не найдено")
+        }
+
+        // сортируем id юзеров чтобы меньший был всегда userOneId а больший userTwoId
+        // дабы избежать дублей в таблице с чатами
+        const [userOneId, userTwoId] = req.id < +userIDWhomSending ? [req.id, +userIDWhomSending] : [+userIDWhomSending, req.id]
+
+        // ищем чат между пользователями
+        let existingRecordChatInTable = await this.chatsListRepository.findOne({
+            where: {
+                userOneId: userOneId,
+                userTwoId: userTwoId
+            }
+        })
+
+        // проверить существует ли уже чат, если нет то создать новый
+        if (!existingRecordChatInTable) {
+            const record = this.chatsListRepository.create({
+                userOneId: userOneId,
+                userTwoId: userTwoId
+            })
+
+            existingRecordChatInTable = await this.chatsListRepository.save(record)
+        }
+
+        // сохраняем аудио запись в БД (SSD)
+        const nameVoiceRecord = await this.universalService.universalCreateBlobVoiceInDB(req.id, voiceMessageFile)
+
+
+        // если чат существует, то записываем в его айди новое сообщение
+        const record = this.messageRepository.create({
+            conversationId: existingRecordChatInTable.id,
+            senderId: req.id,
+            valueMessage: nameVoiceRecord.fileName,
+            isAudio: true,
+            isText: false,
+            isPicture: false
+        })
+
+        await this.messageRepository.save(record)
+
+        // возвращаем id записи голосового сообщения в таблице для ws
+        // и название голосовой записи в БД (SSD)
+        return { idM: record.id, mV: nameVoiceRecord.fileName}
+    }
+
+    // получение voice message из чата пользователей
+    async getVoiceMessage(req: IReqInfoUser, voiceMessageName: string, loginUserSendMessage: string): Promise<fs.ReadStream> {
+        // получаем юзера
+        const user = await this.universalService.universalCheckingUserExistence({ userId: req.id })
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        // если пользователь отправивший голосовое сам юзер, то сразу получаем голосовое сообщение
+        if (user.login === loginUserSendMessage) {
+            return this.universalService.getBlobFileInDB(user.id, voiceMessageName, "mv")
+        }
+
+        // если это другой юзер отправил голосовое, то ищем его по login'у
+        const userWhoSendMessage = await this.universalService.universalCheckingUserExistence({ userLogin: loginUserSendMessage })
+
+        if (!userWhoSendMessage) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        // проверяем дружбу между юзерами
+        const usersFriendship = await this.universalService.universalCheckingFriendship(req.id, userWhoSendMessage.id)
+
+        if (!usersFriendship) {
+            throw new NotFoundException("Этого пользователя в ваших контактах не найдено")
+        }
+
+        return this.universalService.getBlobFileInDB(userWhoSendMessage.id, voiceMessageName, "mv")
+    }
+
+    // получаем запись голосового сообщения из таблицы с сообщениями
+    async getVoiceMessageRecord(req: IReqInfoUser, valueMessage: string, messageId: number, userIDWhomSending: number) {
+        // получаем юзера
+        const user = await this.universalService.universalCheckingUserExistence({ userId: req.id })
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        // проверяем дружбу между юзерами
+        const usersFriendship = await this.universalService.universalCheckingFriendship(req.id, userIDWhomSending)
+
+        if (!usersFriendship) {
+            throw new NotFoundException("Этого пользователя в ваших контактах не найдено")
+        }
+
+        const recordVoiceMessage = await this.messageRepository.findOne({
+            where: {
+                id: messageId,
+                valueMessage
+            },
+
+            select: {
+                id: true,
+                valueMessage: true,
+                createdAt: true,
+                isAudio: true,
+                isText: true,
+                isPicture: true,
+                sender: {
+                    login: true
+                }
+            },
+
+            relations: ['sender']
+        })
+
+        if (recordVoiceMessage) {
+            return {
+                idMessage: recordVoiceMessage.id,
+                value: recordVoiceMessage.valueMessage,
+                created: recordVoiceMessage.createdAt,
+                userLoginSendMessage: recordVoiceMessage.sender.login,
+                isAudio: recordVoiceMessage.isAudio,
+                isText: recordVoiceMessage.isText,
+                isPicture: recordVoiceMessage.isPicture
+            }
+        }
+
+        return {}
     }
 
     async getChatsList(req: IReqInfoUser): Promise<Array<IChatsUser>> {
@@ -122,6 +266,9 @@ export class ChatsService {
                 id: true,
                 valueMessage: true,
                 createdAt: true,
+                isAudio: true,
+                isText: true,
+                isPicture: true,
                 sender: {
                     login: true
                 }
@@ -136,6 +283,9 @@ export class ChatsService {
                 value: getMessageInDB.valueMessage,
                 created: getMessageInDB.createdAt,
                 userLoginSendMessage: getMessageInDB.sender.login,
+                isAudio: getMessageInDB.isAudio,
+                isText: getMessageInDB.isText,
+                isPicture: getMessageInDB.isPicture
             }
         }
 
@@ -144,7 +294,7 @@ export class ChatsService {
 
     async getChatsListMessages(req: IReqInfoUser, dto: ChatsGetListMessagesDto): Promise<IMassagesForChatUser> {
         // нахождение и проверка существования юзера с которым запрашивается чат
-        const userWithWhomChat = await this.universalService.universalCheckingUserExistence(dto.id)
+        const userWithWhomChat = await this.universalService.universalCheckingUserExistence({ userId: dto.id })
 
         if (!userWithWhomChat) {
             throw new BadRequestException('Пользователь не найден')

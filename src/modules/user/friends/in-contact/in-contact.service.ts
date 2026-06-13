@@ -75,7 +75,7 @@ export class InContactService {
     // получение текущего контакта
     async getCurrentContact(dto: IGetCurrentUserDTO, req: IReqInfoUser): Promise<IContactUser> {
         // нахождение и проверка существования юзера
-        const user = await this.universalService.universalCheckingUserExistence(dto.id)
+        const user = await this.universalService.universalCheckingUserExistence({ userId: dto.id })
 
         if (!user) {
             throw new NotFoundException("Пользователь не найден")

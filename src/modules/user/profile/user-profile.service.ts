@@ -18,7 +18,7 @@ export class UserProfileService {
 
     async changeInfo(dto: UserProfileDto, req: IReqInfoUser): Promise<{ message: string}> {
         // нахождение и проверка существования юзера
-        const user = await this.universalService.universalCheckingUserExistence(req.id)
+        const user = await this.universalService.universalCheckingUserExistence({ userId: req.id })
 
         if (!user) {
             throw new BadRequestException('Пользователь не найден')
@@ -52,7 +52,7 @@ export class UserProfileService {
 
     async getUserInfo(req: IReqInfoUser): Promise<IObjUserProfile> {
         // нахождение и проверка существования юзера
-        const user = await this.universalService.universalCheckingUserExistence(req.id)
+        const user = await this.universalService.universalCheckingUserExistence({ userId: req.id })
 
         if (!user) {
             throw new BadRequestException('Пользователь не найден')
@@ -63,7 +63,7 @@ export class UserProfileService {
 
     async changeAvatar(avatarFile: Express.Multer.File, req: IReqInfoUser): Promise<{ message: string}> {
         // получаем юзера
-        const user = await this.universalService.universalCheckingUserExistence(req.id)
+        const user = await this.universalService.universalCheckingUserExistence({ userId: req.id })
 
         if (!user) {
             throw new BadRequestException('Пользователь не найден')
@@ -82,7 +82,7 @@ export class UserProfileService {
 
     async getUserAvatar(req: IReqInfoUser): Promise<fs.ReadStream | null> {
         // получаем юзера
-        const user = await this.universalService.universalCheckingUserExistence(req.id)
+        const user = await this.universalService.universalCheckingUserExistence({ userId: req.id })
 
         if (!user) {
             throw new BadRequestException('Пользователь не найден')
@@ -97,7 +97,7 @@ export class UserProfileService {
 
     async deleteAvatar(req: IReqInfoUser): Promise<{ message: string }> {
         // получаем юзера
-        const user = await this.universalService.universalCheckingUserExistence(req.id)
+        const user = await this.universalService.universalCheckingUserExistence({ userId: req.id })
 
         if (!user) {
             throw new BadRequestException('Пользователь не найден')

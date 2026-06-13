@@ -1,7 +1,7 @@
 import { IsString, IsNotEmpty, MinLength } from 'class-validator'
 import { Type } from 'class-transformer'
 
-export class ChatsMessageSendDto {
+export class ChatsSendTextMessageDto {
     // messageValue
     @Type(() => String)
     @IsString({ message: 'messageValue должен быть string' })

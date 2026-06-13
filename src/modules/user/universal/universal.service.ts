@@ -21,11 +21,11 @@ export class UniversalService {
     ) {}
 
     // нахождение и проверка существования юзера
-    async universalCheckingUserExistence(userId: number): Promise<IUser | null> {
+    async universalCheckingUserExistence({ userId, userLogin }: { userId?: number, userLogin?: string }): Promise<IUser | null> {
+        const userIdOrUserLogin = userLogin ? { login: userLogin } : { id: userId }
+
         return await this.usersRepository.findOne({
-            where: {
-                id: userId
-            },
+            where: userIdOrUserLogin,
             // select - выбираем то что конкретно нам отдаст БД в ответе
             select: {
                 id: true,
@@ -119,63 +119,51 @@ export class UniversalService {
         }
     }
 
-    // //TODO создание аудио файла в БД (SSD) из blob
-    // async createBlobFileInDB(userID: number, messageID: number, blobFile: Blob): Promise<{ fileName: string }> {
-    //     let directoryName = "MessageVoiceDB"
-    //
-    //     // строим путь до наших БД (SSD) с аудио записями или изображениями - STORAGE_PATH + directoryName
-    //     const rootPath = path.resolve(this.configService.get<string>('STORAGE_PATH')!, directoryName)
-    //
-    //     // папка пользователя с его userID
-    //     const userDirectoryPath = path.join(rootPath, String(userID))
-    //
-    //     // создаём "MessageVoiceDB"
-    //     if (!fs.existsSync(rootPath)) {
-    //         fs.mkdirSync(rootPath, {
-    //             // создай ВСЕ недостающие папки по пути т.к. нода сама не умеет создавать целую цепочку папок
-    //             recursive: true
-    //         })
-    //     }
-    //
-    //     // создаём папку пользователя если нет
-    //     if (!fs.existsSync(userDirectoryPath)) {
-    //         fs.mkdirSync(userDirectoryPath, {
-    //             // создай ВСЕ недостающие папки по пути т.к. нода сама не умеет создавать целую цепочку папок
-    //             recursive: true
-    //         })
-    //     }
-    //
-    //     // определяем расширение файла
-    //     let extension = ''
-    //
-    //     // голосовые записи
-    //     if (blobFile.type.includes('webm')) {
-    //         extension = 'webm'
-    //     }
-    //
-    //     if (!extension) {
-    //         throw new BadRequestException('Файл загруженный вами не поддерживается')
-    //     }
-    //
-    //     // создаем имя файла
-    //     const fileName = `${userID}-${messageID}.${extension}`
-    //
-    //     // полный путь до файла
-    //     const filePath = path.join(userDirectoryPath, fileName)
-    //
-    //     // Blob -> Buffer
-    //     const arrayBuffer = await blobFile.arrayBuffer()
-    //
-    //     const buffer = Buffer.from(arrayBuffer)
-    //
-    //     // запись файла
-    //     await fs.promises.writeFile(filePath, buffer)
-    //
-    //     // возвращаем название файла и записываем его в MySQL
-    //     return {
-    //         fileName: fileName
-    //     }
-    // }
+    //TODO создание аудио файла в БД (SSD) из blob
+    async universalCreateBlobVoiceInDB(userID: number, file: Express.Multer.File): Promise<{ fileName: string }> {
+        let directoryName = "MessageVoiceDB"
+
+        // строим путь до наших БД (SSD) с аудио записями или изображениями - STORAGE_PATH + directoryName
+        const rootPath = path.resolve(this.configService.get<string>('STORAGE_PATH')!, directoryName)
+
+        // папка пользователя с его userID
+        const userDirectoryPath = path.join(rootPath, String(userID))
+
+        // создаём "MessageVoiceDB"
+        if (!fs.existsSync(rootPath)) {
+            fs.mkdirSync(rootPath, {
+                // создай ВСЕ недостающие папки по пути т.к. нода сама не умеет создавать целую цепочку папок
+                recursive: true
+            })
+        }
+
+        // создаём папку пользователя если нет
+        if (!fs.existsSync(userDirectoryPath)) {
+            fs.mkdirSync(userDirectoryPath, {
+                // создай ВСЕ недостающие папки по пути т.к. нода сама не умеет создавать целую цепочку папок
+                recursive: true
+            })
+        }
+
+        // определяем расширение файла голосовой записи - если не webm то кидаем ошибку
+        if (!file.mimetype.includes('webm')) {
+            throw new BadRequestException('Файл загруженный вами не поддерживается')
+        }
+
+        // создаем имя файла
+        const fileName = `${randomUUID()}.webm`
+
+        // полный путь до файла
+        const filePath = path.join(userDirectoryPath, fileName)
+
+        // запись файла
+        await fs.promises.writeFile(filePath, file.buffer)
+
+        // возвращаем название файла и записываем его в MySQL
+        return {
+            fileName: fileName
+        }
+    }
 
     //TODO получение File аудио/изображение файла из БД (SSD) отдельным запросом
     // по каждому айтему отдельно загружаем и возвращаем поток

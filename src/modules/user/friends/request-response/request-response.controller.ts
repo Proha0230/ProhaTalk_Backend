@@ -1,8 +1,9 @@
-import { Body, Controller, Post, Get, Headers, BadRequestException, UseGuards, Req, Res } from '@nestjs/common'
+import { Body, Controller, Post, Get, UseGuards, Req, Query } from '@nestjs/common'
 import { AuthGuard } from "@nestjs/passport"
 import { RequestResponseService } from "./request-response.service"
 import { InviteFriendDTO } from "../../../DTO/friends/friends.dto"
 import type { IReqInfo } from "../../../../global-types/types"
+import { IUser } from "../../all-users/types/all-users.types"
 
 @Controller('api/invite-friend')
 export class RequestResponseController {
@@ -53,6 +54,15 @@ export class RequestResponseController {
         return this.requestResponseService.getOutgoingRequests(req.user)
     }
 
+    @Get('get-current-user-outgoing-request')
+    @UseGuards(AuthGuard('jwt'))
+    getCurrentUserOutgoingRequest(
+        @Req() req: IReqInfo,
+        @Query() dto: InviteFriendDTO
+    ): Promise<IUser> {
+        return this.requestResponseService.getCurrentUserOutgoingRequest(req.user, dto)
+    }
+
     // получаем список кто нас добавил в контакты (входящие)
     @Get('get-incoming-requests')
     @UseGuards(AuthGuard('jwt'))
@@ -60,5 +70,14 @@ export class RequestResponseController {
         @Req() req: IReqInfo
     ) {
         return this.requestResponseService.getIncomingRequests(req.user)
+    }
+
+    @Get('get-current-user-incoming-request')
+    @UseGuards(AuthGuard('jwt'))
+    getCurrentUserIncomingRequest(
+        @Req() req: IReqInfo,
+        @Query() dto: InviteFriendDTO
+    ): Promise<IUser> {
+        return this.requestResponseService.getCurrentUserIncomingRequest(req.user, dto)
     }
 }

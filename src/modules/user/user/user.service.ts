@@ -11,7 +11,7 @@ export class UserService {
 
     async getUserAvatar(dto: GetUserAvatarDTO): Promise<fs.ReadStream | null> {
         // получаем запись юзера
-        const user = await this.universalService.universalCheckingUserExistence(dto.id)
+        const user = await this.universalService.universalCheckingUserExistence({ userId: dto.id })
 
         if (!user) {
             throw new BadRequestException('Пользователь не найден')

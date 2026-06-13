@@ -3,8 +3,8 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { UsersDB } from "../../../database/entities/users/users-db.entity"
 import { Repository } from "typeorm"
 import { IGetCurrentUserDTO } from "../../DTO/all-users/all-users.dto"
-import {IUser, IUserInAllUsers} from "./types/all-users.types"
-import {IReqInfo, IReqInfoUser} from "../../../global-types/types"
+import { IUser, IUserInAllUsers } from "./types/all-users.types"
+import { IReqInfoUser } from "../../../global-types/types"
 import { UniversalService } from "../universal/universal.service"
 
 @Injectable()
@@ -31,7 +31,7 @@ export class AllUsersService {
 
     async getCurrentUser(dto: IGetCurrentUserDTO, req: IReqInfoUser): Promise<IUserInAllUsers> {
         // нахождение и проверка существования юзера
-        const user = await this.universalService.universalCheckingUserExistence(dto.id)
+        const user = await this.universalService.universalCheckingUserExistence({ userId: dto.id })
 
         if (!user) {
             throw new NotFoundException("Пользователь не найден")

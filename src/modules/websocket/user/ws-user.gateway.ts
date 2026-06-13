@@ -15,9 +15,10 @@ import { WsValidationPipe } from "../validation-pipe/ws-validation.pipe"
 import { WsJwtGuard } from "../jwt-guard/ws-jwt.guard"
 import type { AuthenticatedSocket } from "./types/index.types"
 import { ChatsService } from "../../user/chats/chats.service"
-import { ChatsMessageSendDto } from "../../DTO/chats/chats-send.dto"
+import { ChatsSendTextMessageDto } from "../../DTO/chats/chats-send-text-message.dto"
 import { MessagesDB } from "../../../database/entities/chats/users-chats-messages-db.entity"
 import { JwtService } from "@nestjs/jwt"
+import { ChatsSendVoiceMessageDto } from "../../DTO/chats/chats-send-voice-message.dto"
 
 // проверка JWT токена юзера
 @UseGuards(WsJwtGuard)
@@ -42,19 +43,35 @@ export class WsUserGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // обрабатываем событие "send-message" - проводим флоу по новому сообщению
     // и отдаем его по WS клиенту - на котором пушим его в пинию
-    @SubscribeMessage('send-message')
-    async sendMessage(
-        @MessageBody() dto: ChatsMessageSendDto,
+    @SubscribeMessage('send-text-message')
+    async sendTextMessage(
+        @MessageBody() dto: ChatsSendTextMessageDto,
         @ConnectedSocket() client: AuthenticatedSocket
     ): Promise<void> {
         try {
             const nameRoom = this.wsUserChatService.getRoomName(dto, client)
 
-            const newMessage = await this.chatsService.messageSend(dto, client.user, true)
+            const newMessage = await this.chatsService.messageTextSend(dto, client.user, true)
 
             const resultMessage = await this.chatsService.getChatMessage(newMessage as MessagesDB)
 
             this.server.to(nameRoom).emit('new-message', resultMessage)
+        } catch (error) {
+            throw new WsException(error.message)
+        }
+    }
+
+    @SubscribeMessage('send-voice-message')
+    async sendVoiceMessage(
+        @MessageBody() dto: ChatsSendVoiceMessageDto,
+        @ConnectedSocket() client: AuthenticatedSocket
+    ): Promise<void> {
+        try {
+            const nameRoom = this.wsUserChatService.getRoomName(dto, client)
+
+            const voiceMessageRecord = await this.chatsService.getVoiceMessageRecord(client.user, dto.mV, dto.idM, dto.id)
+
+            this.server.to(nameRoom).emit('new-message', voiceMessageRecord)
         } catch (error) {
             throw new WsException(error.message)
         }

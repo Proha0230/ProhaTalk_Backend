@@ -7,6 +7,7 @@ import { Repository } from "typeorm"
 import { InviteFriendDTO } from "../../../DTO/friends/friends.dto"
 import { IReqInfoUser } from "../../../../global-types/types"
 import { UniversalService } from "../../universal/universal.service"
+import { IUser } from "../../all-users/types/all-users.types"
 
 @Injectable()
 export class RequestResponseService {
@@ -19,14 +20,14 @@ export class RequestResponseService {
         private readonly dataSource: DataSource
     ) {}
 
-    // отправка заявки на добавление в контакты юзера
+    // отправка исходящей заявки на добавление в контакты юзера
     async sendInviteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
         if (dto.id === req.id) {
             throw new BadRequestException('Нельзя добавить в контакты самого себя')
         }
 
         // нахождение и проверка существования юзера
-        const user = await this.universalService.universalCheckingUserExistence(dto.id)
+        const user = await this.universalService.universalCheckingUserExistence({ userId: dto.id })
 
         if (!user) {
             throw new BadRequestException('Пользователь не найден')
@@ -58,9 +59,9 @@ export class RequestResponseService {
         }
     }
 
-    // отмена отправленной заявки юзером на добавление в контакты
+    // отмена отправленной исходящей заявки юзером на добавление в контакты
     async cancelInviteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
-        // проверка наличия отправленной заявки на добавление в контакты
+        // проверка наличия отправленной исходящей заявки на добавление в контакты
         const request = this.universalService.universalCheckingSubmittedRequestToAddContacts(req.id, dto.id)
 
         if (!request) {
@@ -77,9 +78,9 @@ export class RequestResponseService {
         }
     }
 
-    // отклонение заявки на добавление в контакты
+    // отклонение входящей заявки на добавление в контакты
     async declineInviteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
-        // проверка наличия отправленной заявки на добавление в контакты
+        // проверка наличия отправленной входящей заявки на добавление в контакты
         const request = this.universalService.universalCheckingSubmittedRequestToAddContacts(dto.id, req.id)
 
         if (!request) {
@@ -102,9 +103,9 @@ export class RequestResponseService {
         }
     }
 
-    // принятие заявки на добавление в контакты юзера
+    // принятие входящей заявки на добавление в контакты юзера
     async acceptInviteFriend(dto: InviteFriendDTO, req: IReqInfoUser): Promise<any> {
-        // проверка наличия отправленной заявки на добавление в контакты
+        // проверка наличия отправленной входящей заявки на добавление в контакты
         const request = this.universalService.universalCheckingSubmittedRequestToAddContacts(dto.id, req.id)
 
         if (!request) {
@@ -202,6 +203,7 @@ export class RequestResponseService {
             lastname: request.receiver.lastname,
             lastSeen: request.receiver.lastSeen,
             status: request.receiver.status,
+            avatar: request.receiver.avatar
         }))
     }
 
@@ -236,6 +238,57 @@ export class RequestResponseService {
             lastname: request.sender.lastname,
             lastSeen: request.sender.lastSeen,
             status: request.sender.status,
+            avatar: request.sender.avatar
         }))
+    }
+
+    // получаем текущего юзера кто отправил заявку на добавление нас в контакты (входящие)
+    async getCurrentUserIncomingRequest(req: IReqInfoUser, dto: InviteFriendDTO): Promise<IUser> {
+        // проверка наличия отправленной входящей заявки на добавление в контакты
+        const request = this.universalService.universalCheckingSubmittedRequestToAddContacts(dto.id, req.id)
+
+        if (!request) {
+            throw new BadRequestException('Заявка на добавление в контакты не найдена')
+        }
+
+        // проверяем дружбу между юзерами
+        const usersFriendship = await this.universalService.universalCheckingFriendship(dto.id, req.id)
+
+        if (usersFriendship) {
+            throw new BadRequestException('Пользователь уже в контактах')
+        }
+
+        const user = await this.universalService.universalCheckingUserExistence({ userId: dto.id })
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        return user
+    }
+
+    // получаем текущего юзера кому мы отправили заявку на добавление в контакты (исходящие)
+    async getCurrentUserOutgoingRequest(req: IReqInfoUser, dto: InviteFriendDTO): Promise<IUser> {
+        // проверка наличия отправленной исходящей заявки на добавление в контакты
+        const request = this.universalService.universalCheckingSubmittedRequestToAddContacts(req.id, dto.id)
+
+        if (!request) {
+            throw new BadRequestException('Заявка на добавление в контакты не найдена')
+        }
+
+        // проверяем дружбу между юзерами
+        const usersFriendship = await this.universalService.universalCheckingFriendship(req.id, dto.id)
+
+        if (usersFriendship) {
+            throw new BadRequestException('Пользователь уже в контактах')
+        }
+
+        const user = await this.universalService.universalCheckingUserExistence({ userId: dto.id })
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        return user
     }
 }

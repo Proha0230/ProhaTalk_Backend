@@ -53,7 +53,7 @@ export class WsUserService {
 
         if (!_isEmpty(userJWTInfo) && userJWTInfo.id) {
             // нахождение и проверка существования юзера, чтобы обновить lastSeen
-            const user = await this.universalService.universalCheckingUserExistence(userJWTInfo.id)
+            const user = await this.universalService.universalCheckingUserExistence({ userId: userJWTInfo.id })
 
             if (!user) {
                 throw new WsException('Пользователь не найден')
