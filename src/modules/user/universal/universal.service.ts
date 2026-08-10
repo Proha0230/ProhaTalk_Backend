@@ -10,6 +10,10 @@ import * as path from 'path'
 import { ConfigService } from "@nestjs/config"
 import { randomUUID } from 'crypto'
 import sharp from 'sharp'
+import { IReqInfoUser } from "../../../global-types/types"
+import * as webPush from "web-push"
+import { PushSubscriptionDB } from "../../../database/entities/push/push-subscriptions-db.entity"
+import { IPushPayload } from "../../push/types/push.types"
 
 @Injectable()
 export class UniversalService {
@@ -17,8 +21,39 @@ export class UniversalService {
         @InjectRepository(UsersDB) private readonly usersRepository: Repository<UsersDB>,
         @InjectRepository(FriendsRequestsDB) private readonly friendsRequestsRepository: Repository<FriendsRequestsDB>,
         @InjectRepository(FriendsUsersDB) private readonly friendsUsersRepository: Repository<FriendsUsersDB>,
+        @InjectRepository(PushSubscriptionDB) private readonly pushSubscriptionRepository: Repository<PushSubscriptionDB>,
         private readonly configService: ConfigService
     ) {}
+
+    async sendNotification(req: IReqInfoUser, payload: IPushPayload): Promise<void> {
+        const subscriptions = await this.pushSubscriptionRepository.find({
+            where: {
+                userId: req.id
+            }
+        })
+
+        if (subscriptions.length) {
+            for (const subscription of subscriptions) {
+                try {
+                    await webPush.sendNotification({
+                        endpoint: subscription.endpoint,
+                        keys: {
+                            p256dh: subscription.p256dh,
+                            auth: subscription.auth
+                        }
+                    }, JSON.stringify(payload))
+
+                } catch (error) {
+                    if (error.statusCode === 404 || error.statusCode === 410) {
+
+                        await this.pushSubscriptionRepository.delete({
+                            id: subscription.id
+                        })
+                    }
+                }
+            }
+        }
+    }
 
     // нахождение и проверка существования юзера
     async universalCheckingUserExistence({ userId, userLogin }: { userId?: number, userLogin?: string }): Promise<IUser | null> {
@@ -63,6 +98,7 @@ export class UniversalService {
         return !!isUserFriend
     }
 
+    // сжатие изображений либой sharp
     async universalSharpCompressImage(file: Express.Multer.File): Promise<Buffer> {
             return await sharp(file.buffer)
                 .resize({ width: 1280, withoutEnlargement: true }) // если картинка меньше 1200px,

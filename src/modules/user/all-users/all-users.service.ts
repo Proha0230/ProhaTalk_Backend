@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common'
 import { InjectRepository } from "@nestjs/typeorm"
 import { UsersDB } from "../../../database/entities/users/users-db.entity"
-import { Repository } from "typeorm"
+import {ILike, Repository} from "typeorm"
 import { IGetCurrentUserDTO } from "../../DTO/all-users/all-users.dto"
 import { IUser, IUserInAllUsers } from "./types/all-users.types"
 import { IReqInfoUser } from "../../../global-types/types"
 import { UniversalService } from "../universal/universal.service"
+import { IGetSearchUsersDTO } from "../../DTO/all-users/get-search-users.dto"
 
 @Injectable()
 export class AllUsersService {
@@ -17,6 +18,32 @@ export class AllUsersService {
     async getAllUsers(): Promise<Array<IUser>> {
         // когда не указываем where: {} - то отдадутся все записи
         return await this.usersRepository.find({
+            // select - выбираем то что конкретно нам отдаст БД в ответе
+            select: {
+                id: true,
+                login: true,
+                name: true,
+                lastname: true,
+                status: true,
+                avatar: true
+            }
+        })
+    }
+
+    async getSearchUsers(dto: IGetSearchUsersDTO): Promise<Array<IUser>> {
+        const search = dto.uLON?.trim()
+
+        // если удалили все или передали пустой значение, то отдаем весь список
+        if (!search) {
+            return await this.getAllUsers()
+        }
+
+        // dto.uLON - userNameOrLogin
+        return await this.usersRepository.find({
+            where: [
+                { login: ILike(`%${search}%`) },
+                { name: ILike(`%${search}%`) }
+            ],
             // select - выбираем то что конкретно нам отдаст БД в ответе
             select: {
                 id: true,

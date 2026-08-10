@@ -321,6 +321,8 @@ export class ChatsService {
 
         let response: IMassagesForChatUser = {
             userLoginWithWhomChat: userWithWhomChat.login,
+            hasMore: false,
+            nextCursor: null,
             messagesList: []
         }
 
@@ -330,33 +332,65 @@ export class ChatsService {
             return response
         }
 
+        // устанавливаем лимит по которому будет выдаваться максимальное кол-во
+        // сообщений за раз клиенту
+        const LIMIT = 20
+
         // если запись чата в таблице чатов есть - то ищем все сообщения по этому id чата
-        const messagesList = await this.messageRepository.find({
-            where: {
+        const query = this.messageRepository
+            // alias для выбора нужных полей в select, связывании, сортировки
+            .createQueryBuilder('message')
+
+            // указываем связывание чтобы мы могли в дальнейшем использовать sender.login
+            // как выше указывали relations: ['sender']
+            .leftJoinAndSelect('message.sender', 'sender')
+
+            // получаем отфильтрованные по нужному нам чату сообщения
+            .where('message.conversationId = :conversationId', {
                 conversationId: existingRecordChatInTable.id
-            },
+            })
 
-            select: {
-                id: true,
-                valueMessage: true,
-                createdAt: true,
-                isPicture: true,
-                isAudio: true,
-                isText: true,
-                sender: {
-                    login: true
-                }
-            },
+        // если пришел курсор, то отдаем сообщения с id меньше чем у курсора
+        // дозагружаем прошлые сообщения из чата юзеров
+        if (dto.cursor) {
+            query.andWhere('message.id < :cursor', {
+                cursor: dto.cursor
+            })
+        }
 
-            order: {
-                createdAt: "ASC"
-            },
+        const messagesList = await query
+            // так же как выше у select выбираем нужные нам поля для отдачи
+            .select([
+                'message.id',
+                'message.valueMessage',
+                'message.createdAt',
+                'message.isPicture',
+                'message.isAudio',
+                'message.isText',
+                'sender.login'
+            ])
+            // сортировка сообщений от большего к меньшему
+            // а если ASC то отсортирует от меньшему к большему
+            .orderBy('message.id', 'DESC')
+            .take(LIMIT + 1)
+            .getMany()
 
-            relations: ['sender']
-        })
-
-        // если сообщения есть
+        // если сообщения есть в чате между юзерами
         if (messagesList.length) {
+            // переменная которая показывает есть ли еще сообщения свыше LIMIT
+            // чтоб их в будущем дозагрузить
+            const hasMore = messagesList.length > LIMIT
+
+            if (hasMore) {
+                // если есть еще сообщения свыше LIMIT, то удаляем проверочное сообщение
+                // чтоб отдать ровно столько сколько нужно
+                messagesList.pop()
+            }
+
+            // так как мы юзаем DESC у нас приходят сообщения сверху сначала свежие и заканчиваются снизу старыми,
+            // а нам нужно чтоб в конце снизу были свежие (в самом низе UI) а сверху старые (прошлые)
+            messagesList.reverse()
+
             response.messagesList = messagesList.map((item: any) => {
                 return {
                     idMessage: item.id,
@@ -368,6 +402,16 @@ export class ChatsService {
                     isText: item.isText
                 }
             })
+
+            response.hasMore = hasMore
+
+            // указываем самое старое сообщение из выборки по LIMIT чтобы потом
+            // если нужно догружать прошлые сообщения уже начиная с него
+            if (hasMore) {
+                response.nextCursor = response.messagesList[0].idMessage
+            } else {
+                response.nextCursor = null
+            }
         }
 
         return response

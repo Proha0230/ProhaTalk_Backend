@@ -22,7 +22,7 @@ export class SignInService {
         })
 
         if (!user) {
-            throw new BadRequestException('Неверный логин или пароль',)
+            throw new BadRequestException('Неверный логин или пароль')
         }
 
         const isPasswordValid = await bcrypt.compare(

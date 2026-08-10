@@ -5,6 +5,8 @@ export interface IChatsUser {
 
 export interface IMassagesForChatUser {
     userLoginWithWhomChat: string
+    hasMore: boolean
+    nextCursor: number | null
     messagesList: Array<IMassage>
 }
 

@@ -1,4 +1,5 @@
-import {Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn} from "typeorm"
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm"
+import { PushSubscriptionDB } from "../push/push-subscriptions-db.entity"
 
 @Entity({ name: 'users_db' })
 export class UsersDB {
@@ -81,6 +82,9 @@ export class UsersDB {
         default: null
     })
     avatar: string | null
+
+    @OneToMany(() => PushSubscriptionDB, pushSubscription => pushSubscription.user)
+    pushSubscriptions: Array<PushSubscriptionDB>
 
     @CreateDateColumn()
     createdAt: Date

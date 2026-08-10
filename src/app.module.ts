@@ -14,6 +14,7 @@ import { ChatsModule } from "./modules/user/chats/chats.module"
 import { WsUserModule } from "./modules/websocket/user/ws-user.module"
 import { UniversalModule } from "./modules/user/universal/universal.module"
 import { UserModule } from "./modules/user/user/user.module"
+import { PushModule } from "./modules/push/push.module"
 
 loadEnvLocal()
 
@@ -42,6 +43,7 @@ loadEnvLocal()
     UserModule,
     ChatsModule,
     WsUserModule,
+    PushModule,
     UniversalModule
   ]
 })
